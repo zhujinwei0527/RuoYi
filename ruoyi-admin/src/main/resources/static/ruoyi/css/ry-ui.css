@@ -347,7 +347,7 @@ label.error {
 
 .input-group.date label.error {
 	z-index:99;
-	right: 3px
+	right: 42px
 }
 
 .Validform_error,input.error,textarea.error,select.error {
@@ -908,6 +908,9 @@ table.rc-table-resizing thead > th > a {
   background-color: #fff;
   box-sizing: border-box;
   z-index: 1;
+  border-width: 0 0 0 1px;
+  -webkit-box-shadow: 0 0 10px rgba(0,0,0,.12);
+  box-shadow: 0 0 10px rgba(0,0,0,.12);
 }
 
 .fixed-columns {
@@ -948,6 +951,7 @@ table.rc-table-resizing thead > th > a {
 .bootstrap-tree-table .table{border-bottom: 0px solid #e7eaec!important;}
 .bootstrap-tree-table .table-bordered .treetable-thead th {border-left: 1px solid #e7eaec!important;}
 .bootstrap-tree-table .table-bordered .treetable-tbody td {border-right: 1px solid #e7eaec!important;}
+.bootstrap-tree-table .fixed-table-pagination .pagination-detail {margin-top: 10px;margin-bottom: 10px;}
 
 /** 首页样式 **/
 .ax_close_max {

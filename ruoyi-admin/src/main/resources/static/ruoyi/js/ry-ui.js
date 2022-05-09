@@ -180,14 +180,15 @@ var table = {
                 if (typeof table.get(this.id).responseHandler == "function") {
                     table.get(this.id).responseHandler(res);
                 }
+                var thisOptions = table.config[this.id];
                 if (res.code == web_status.SUCCESS) {
-                    if ($.common.isNotEmpty(table.options.sidePagination) && table.options.sidePagination == 'client') {
+                    if ($.common.isNotEmpty(thisOptions.sidePagination) && thisOptions.sidePagination == 'client') {
                         return res.rows;
                     } else {
-                        if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
-                            var column = $.common.isEmpty(table.options.uniqueId) ? table.options.columns[1].field : table.options.uniqueId;
+                        if ($.common.isNotEmpty(thisOptions.rememberSelected) && thisOptions.rememberSelected) {
+                            var column = $.common.isEmpty(thisOptions.uniqueId) ? thisOptions.columns[1].field : thisOptions.uniqueId;
                             $.each(res.rows, function(i, row) {
-                                row.state = $.inArray(row[column], table.rememberSelectedIds[table.options.id]) !== -1;
+                                row.state = $.inArray(row[column], table.rememberSelectedIds[thisOptions.id]) !== -1;
                             })
                         }
                         return { rows: res.rows, total: res.total };
@@ -539,6 +540,9 @@ var table = {
                         return false;
                     }
                 });
+                if (actions.length === 0) {
+                    actions.push($.common.sprintf("<span>%s</span>", value))
+                }
                 return actions.join('');
             },
             // 回显数据字典（字符串数组）
@@ -549,13 +553,18 @@ var table = {
                 var currentSeparator = $.common.isEmpty(separator) ? "," : separator;
                 var actions = [];
                 $.each(value.split(currentSeparator), function(i, val) {
+                    var match = false
                     $.each(datas, function(index, dict) {
                         if (dict.dictValue == ('' + val)) {
                             var listClass = $.common.equals("default", dict.listClass) || $.common.isEmpty(dict.listClass) ? "" : "badge badge-" + dict.listClass;
-                            actions.push($.common.sprintf("<span class='%s'>%s </span>", listClass, dict.dictLabel));
+                            actions.push($.common.sprintf("<span class='%s'>%s</span>", listClass, dict.dictLabel));
+                            match = true
                             return false;
                         }
                     });
+                    if (!match) {
+                        actions.push($.common.sprintf("<span> %s </span>", val));
+                    }
                 });
                 return actions.join('');
             },
@@ -588,10 +597,13 @@ var table = {
                     id: "bootstrap-tree-table",
                     type: 1, // 0 代表bootstrapTable 1代表bootstrapTreeTable
                     height: 0,
-                    rootIdValue: null,
+                    rootIdValue: 0,
                     ajaxParams: {},
                     toolbar: "toolbar",
                     striped: false,
+                    pagination: false,
+                    pageSize: 10,
+                    pageList: [10, 25, 50],
                     expandColumn: 1,
                     showSearch: true,
                     showRefresh: true,
@@ -612,6 +624,10 @@ var table = {
                     ajaxParams: options.ajaxParams,                     // 请求数据的ajax的data属性
                     rootIdValue: options.rootIdValue,                   // 设置指定根节点id值
                     height: options.height,                             // 表格树的高度
+                    pagination: options.pagination,                     // 是否显示分页
+                    dataUrl: options.dataUrl,                           // 加载子节点异步请求数据url
+                    pageSize: options.pageSize,                         // 每页的记录行数
+                    pageList: options.pageList,                         // 可供选择的每页的行数
                     expandColumn: options.expandColumn,                 // 在哪一列上面显示展开按钮
                     striped: options.striped,                           // 是否显示行间隔色
                     bordered: options.bordered,                         // 是否显示边框
@@ -622,6 +638,7 @@ var table = {
                     expandAll: options.expandAll,                       // 是否全部展开
                     expandFirst: options.expandFirst,                   // 是否默认第一级展开--expandAll为false时生效
                     columns: options.columns,                           // 显示列信息（*）
+                    onClickRow: options.onClickRow,                     // 单击某行事件
                     responseHandler: $.treeTable.responseHandler,       // 在加载服务器发送来的数据之前处理函数
                     onLoadSuccess: $.treeTable.onLoadSuccess            // 当所有数据被加载时触发处理函数
                 });
@@ -630,7 +647,7 @@ var table = {
             search: function(formId) {
                 var currentId = $.common.isEmpty(formId) ? $('form').attr('id') : formId;
                 var params = $.common.formToJSON(currentId);
-                $.bttTable.bootstrapTreeTable('refresh', params);
+                $.bttTable.bootstrapTreeTable('refresh', $.extend(params, table.options.ajaxParams));
             },
             // 刷新
             refresh: function() {
@@ -682,7 +699,7 @@ var table = {
                     }
                     $("#" + tableId).bootstrapTable('refresh', params);
                 } else if (table.options.type == table_type.bootstrapTreeTable) {
-                    $("#" + tableId).bootstrapTreeTable('refresh', []);
+                    $("#" + tableId).bootstrapTreeTable('refresh', table.options.ajaxParams);
                 }
                 if ($.common.isNotEmpty(startLayDate) && $.common.isNotEmpty(endLayDate)) {
                     endLayDate.config.min.year = '';
@@ -1313,7 +1330,7 @@ var table = {
         },
         // 校验封装处理
         validate: {
-            // 判断返回标识是否唯一 false 不存在 true 存在
+            // 判断返回标识是否唯一 false 为存在 true 为不存在
             unique: function (value) {
                 if (value == "0") {
                     return true;
@@ -1520,7 +1537,7 @@ var table = {
         common: {
             // 判断字符串是否为空
             isEmpty: function (value) {
-                if (value == null || this.trim(value) == "") {
+                if (value == null || this.trim(value) == "" || value == undefined || value == "undefined") {
                     return true;
                 }
                 return false;
