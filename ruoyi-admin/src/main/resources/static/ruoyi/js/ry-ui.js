@@ -10,8 +10,8 @@ var table = {
     options: {},
     // 设置实例配置
     set: function(id) {
-        if($.common.getLength(table.config) > 1 && $.common.isNotEmpty(event)) {
-            var tableId = $.common.isEmpty(id) ? $(event.currentTarget).parents(".bootstrap-table").find("table.table").attr("id") : id;
+        if ($.common.getLength(table.config) > 1 && $.common.isNotEmpty(event)) {
+            var tableId = $.common.isEmpty(id) ? $(event.currentTarget).parents(".bootstrap-table").find("table.table").attr("id") || $(event.currentTarget).parents(".bootstrap-tree-table").find("table.table").attr("id") : id;
             if ($.common.isNotEmpty(tableId)) {
                 table.options = table.get(tableId);
             }
@@ -221,13 +221,13 @@ var table = {
                     if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
                         func = $.inArray(e.type, ['check', 'check-all']) > -1 ? 'union' : 'difference';
                         var selectedIds = table.rememberSelectedIds[table.options.id];
-                        if($.common.isNotEmpty(selectedIds)) {
+                        if ($.common.isNotEmpty(selectedIds)) {
                             table.rememberSelectedIds[table.options.id] = _[func](selectedIds, rowIds);
                         } else {
                             table.rememberSelectedIds[table.options.id] = _[func]([], rowIds);
                         }
                         var selectedRows = table.rememberSelecteds[table.options.id];
-                        if($.common.isNotEmpty(selectedRows)) {
+                        if ($.common.isNotEmpty(selectedRows)) {
                             table.rememberSelecteds[table.options.id] = _[func](selectedRows, rows);
                         } else {
                             table.rememberSelecteds[table.options.id] = _[func]([], rows);
@@ -249,7 +249,7 @@ var table = {
                 $(optionsIds).off("click").on("click", '.img-circle', function() {
                     var src = $(this).attr('src');
                     var target = $(this).data('target');
-                    if($.common.equals("self", target)) {
+                    if ($.common.equals("self", target)) {
                         var height = $(this).data('height');
                         var width = $(this).data('width');
                         top.layer.open({
@@ -300,6 +300,9 @@ var table = {
                 var tableParams = $("#" + currentId).bootstrapTable('getOptions');
                 var pageSize = $.common.isNotEmpty(tableParams.pageSize) ? tableParams.pageSize: table.options.pageSize;
                 var pageNumber = $.common.isNotEmpty(tableParams.pageNumber) ? tableParams.pageNumber: table.options.pageNumber;
+                if (table.options.sidePagination == 'client') {
+                    return index + 1;
+                }
                 return pageSize * (pageNumber - 1) + index + 1;
             },
             // 列超出指定长度浮动提示 target（copy单击复制文本 open弹窗打开文本）
@@ -360,7 +363,7 @@ var table = {
                 if ($.common.isNotEmpty(pageSize)) {
                     params.pageSize = pageSize;
                 }
-                if($.common.isNotEmpty(tableId)){
+                if ($.common.isNotEmpty(tableId)){
                     $("#" + tableId).bootstrapTable('refresh', params);
                 } else{
                     $("#" + table.options.id).bootstrapTable('refresh', params);
@@ -490,7 +493,7 @@ var table = {
                 });
                 if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
                     var selectedRows = table.rememberSelecteds[table.options.id];
-                    if($.common.isNotEmpty(selectedRows)) {
+                    if ($.common.isNotEmpty(selectedRows)) {
                         rows = $.map(table.rememberSelecteds[table.options.id], function (row) {
                             return $.common.getItemField(row, column);
                         });
@@ -519,7 +522,7 @@ var table = {
                 });
                 if ($.common.isNotEmpty(table.options.rememberSelected) && table.options.rememberSelected) {
                     var selectedRows = table.rememberSelecteds[table.options.id];
-                    if($.common.isNotEmpty(selectedRows)) {
+                    if ($.common.isNotEmpty(selectedRows)) {
                         rows = $.map(selectedRows, function (row) {
                             return $.common.getItemField(row, table.options.columns[1].field);
                         });
@@ -809,7 +812,7 @@ var table = {
             },
             // 获取iframe页的DOM
             getChildFrame: function (index) {
-                if($.common.isEmpty(index)){
+                if ($.common.isEmpty(index)){
                     var index = parent.layer.getFrameIndex(window.name);
                     return parent.layer.getChildFrame('body', index);
                 } else {
@@ -818,7 +821,7 @@ var table = {
             },
             // 关闭窗体
             close: function (index) {
-                if($.common.isEmpty(index)){
+                if ($.common.isEmpty(index)){
                     var index = parent.layer.getFrameIndex(window.name);
                     parent.layer.close(index);
                 } else {
@@ -880,6 +883,9 @@ var table = {
                     yes: callback,
                     cancel: function(index) {
                         return true;
+                    },
+                    success: function () {
+                        $(':focus').blur();
                     }
                 });
             },
@@ -901,7 +907,7 @@ var table = {
                     }
                 }
                 var btnCallback = {};
-                if(options.btn instanceof Array){
+                if (options.btn instanceof Array){
                     for (var i = 1, len = options.btn.length; i < len; i++) {
                         var btn = options["btn" + (i + 1)];
                         if (btn) {
@@ -926,6 +932,9 @@ var table = {
                     yes: options.yes,
                     cancel: function () {
                         return true;
+                    },
+                    success: function () {
+                        $(':focus').blur();
                     }
                 }, btnCallback));
                 if ($.common.isNotEmpty(options.full) && options.full === true) {
@@ -969,6 +978,9 @@ var table = {
                     },
                     cancel: function(index) {
                         return true;
+                    },
+                    success: function () {
+                        $(':focus').blur();
                     }
                 });
                 top.layer.full(index);
@@ -1083,7 +1095,7 @@ var table = {
                 table.set();
                 $.modal.confirm("确定删除该条" + table.options.modalName + "信息吗？", function() {
                     var url = $.common.isEmpty(id) ? table.options.removeUrl : table.options.removeUrl.replace("{id}", id);
-                    if(table.options.type == table_type.bootstrapTreeTable) {
+                    if (table.options.type == table_type.bootstrapTreeTable) {
                         $.operate.get(url);
                     } else {
                         var data = { "ids": id };
@@ -1136,7 +1148,7 @@ var table = {
             // 修改信息
             edit: function(id) {
                 table.set();
-                if($.common.isEmpty(id) && table.options.type == table_type.bootstrapTreeTable) {
+                if ($.common.isEmpty(id) && table.options.type == table_type.bootstrapTreeTable) {
                     var row = $("#" + table.options.id).bootstrapTreeTable('getSelections')[0];
                     if ($.common.isEmpty(row)) {
                         $.modal.alertWarning("请至少选择一条记录");
@@ -1160,7 +1172,7 @@ var table = {
                 if ($.common.isNotEmpty(id)) {
                     url = table.options.updateUrl.replace("{id}", id);
                 } else {
-                    if(table.options.type == table_type.bootstrapTreeTable) {
+                    if (table.options.type == table_type.bootstrapTreeTable) {
                         var row = $("#" + table.options.id).bootstrapTreeTable('getSelections')[0];
                         if ($.common.isEmpty(row)) {
                             $.modal.alertWarning("请至少选择一条记录");
@@ -1286,7 +1298,7 @@ var table = {
             successCallback: function(result) {
                 if (result.code == web_status.SUCCESS) {
                     var parent = activeWindow();
-                    if($.common.isEmpty(parent.table)) {
+                    if ($.common.isEmpty(parent.table)) {
                     	$.modal.msgSuccessReload(result.msg);
                     } else if (parent.table.options.type == table_type.bootstrapTable) {
                         $.modal.close();
@@ -1310,15 +1322,20 @@ var table = {
                 if (result.code == web_status.SUCCESS) {
                     var topWindow = $(window.parent.document);
                     var currentId = $('.page-tabs-content', topWindow).find('.active').attr('data-panel');
-                    var $contentWindow = $('.RuoYi_iframe[data-id="' + currentId + '"]', topWindow)[0].contentWindow;
-                    $.modal.close();
-                    $contentWindow.$.modal.msgSuccess(result.msg);
-                    $contentWindow.$(".layui-layer-padding").removeAttr("style");
-                    if ($contentWindow.table.options.type == table_type.bootstrapTable) {
-                        $contentWindow.$.table.refresh();
-                    } else if ($contentWindow.table.options.type == table_type.bootstrapTreeTable) {
-                        $contentWindow.$.treeTable.refresh();
+                    var topWindow = $('.RuoYi_iframe[data-id="' + currentId + '"]', topWindow)[0];
+                    if ($.common.isNotEmpty(topWindow) && $.common.isNotEmpty(currentId)) {
+                    	var $contentWindow = topWindow.contentWindow;
+                    	$contentWindow.$.modal.msgSuccess(result.msg);
+                        $contentWindow.$(".layui-layer-padding").removeAttr("style");
+                        if ($contentWindow.table.options.type == table_type.bootstrapTable) {
+                            $contentWindow.$.table.refresh();
+                        } else if ($contentWindow.table.options.type == table_type.bootstrapTreeTable) {
+                            $contentWindow.$.treeTable.refresh();
+                        }
+                    } else {
+                        $.modal.msgSuccess(result.msg);
                     }
+                    $.modal.close();
                     $.modal.closeTab();
                 } else if (result.code == web_status.WARNING) {
                     $.modal.alertWarning(result.msg)
@@ -1401,7 +1418,7 @@ var table = {
                     var node = tree.getNodesByParam("id", treeId, null)[0];
                     $.tree.selectByIdName(treeId, node);
                     // 回调tree方法
-                    if(typeof(options.callBack) === "function"){
+                    if (typeof(options.callBack) === "function"){
                         options.callBack(tree);
                     }
                 });
@@ -1490,7 +1507,7 @@ var table = {
             // 不允许根父节点选择
             notAllowParents: function(_tree) {
                 var nodes = _tree.getSelectedNodes();
-                if(nodes.length == 0){
+                if (nodes.length == 0){
                     $.modal.msgError("请选择节点后提交");
                     return false;
                 }
@@ -1678,7 +1695,7 @@ var table = {
             formToJSON: function(formId) {
                 var json = {};
                 $.each($("#" + formId).serializeArray(), function(i, field) {
-                    if(json[field.name]) {
+                    if (json[field.name]) {
                         json[field.name] += ("," + field.value);
                     } else {
                         json[field.name] = field.value;
